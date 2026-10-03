@@ -10,8 +10,8 @@ export const content = {
   // Frase curta abaixo dos nomes
   tagline: 'Cada música, cada foto, cada vídeo… um pedacinho da nossa história.',
 
-  // Data em que vocês começaram (ano, mês 1-12, dia) — usada no contador "dias juntos"
-  startDate: { year: 2024, month: 1, day: 1 },
+  // Data e hora em que vocês começaram — alimenta o contador animado "dias juntos"
+  startDate: { year: 2025, month: 10, day: 13, hour: 9, minute: 26 },
 
   // Sua declaração (aparece na seção "Uma carta para você")
   declaration: {

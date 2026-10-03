@@ -48,6 +48,13 @@ export const VolumeIcon = ({ className = 'w-5 h-5' }: IconProps) => (
   </svg>
 );
 
+export const VolumeMuteIcon = ({ className = 'w-5 h-5' }: IconProps) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+    <path d="M3 9v6h4l5 5V4L7 9H3z" />
+    <path d="M15.6 8.2l6 6m0-6l-6 6" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" />
+  </svg>
+);
+
 export const ChevronLeftIcon = ({ className = 'w-6 h-6' }: IconProps) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
     <path d="M15 18l-6-6 6-6" />

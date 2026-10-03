@@ -1,19 +1,21 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import Sidebar from './components/Sidebar';
 import PlayerBar from './components/PlayerBar';
 import MediaCarousel, { EmptyCard } from './components/MediaCarousel';
 import Declaration from './components/Declaration';
+import DaysCounter from './components/DaysCounter';
 import { HeartIcon } from './components/Icons';
 import { MusicIcon, PhotoIcon } from './components/SectionIcons';
 import { listMusic, listPhotos, listVideos, type MediaItem } from './lib/supabase';
 import { content } from './config/content';
 
-function daysTogether(): number {
-  const { year, month, day } = content.startDate;
-  const start = new Date(year, month - 1, day);
-  const diff = Date.now() - start.getTime();
-  return Math.max(0, Math.floor(diff / 86_400_000));
-}
+const startDate = new Date(
+  content.startDate.year,
+  content.startDate.month - 1,
+  content.startDate.day,
+  content.startDate.hour ?? 0,
+  content.startDate.minute ?? 0,
+);
 
 export default function App() {
   const [tracks, setTracks] = useState<MediaItem[]>([]);
@@ -47,7 +49,6 @@ export default function App() {
 
   const currentTrack = currentIndex >= 0 ? tracks[currentIndex] ?? null : null;
   const coverUrl = photos.length > 0 ? photos[0].url : null;
-  const days = useMemo(daysTogether, []);
 
   const pickNextIndex = useCallback(
     (dir: 1 | -1) => {
@@ -169,10 +170,7 @@ export default function App() {
                   {content.coupleNames}
                 </h2>
                 <div className="flex flex-wrap items-center gap-3 text-sm text-white/80">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1">
-                    <HeartIcon className="w-3.5 h-3.5 text-spotify-bright" />
-                    {days.toLocaleString('pt-BR')} {days === 1 ? 'dia' : 'dias'} juntos
-                  </span>
+                  <DaysCounter start={startDate} />
                   <span>{tracks.length} {tracks.length === 1 ? 'música' : 'músicas'}</span>
                   <span className="hidden sm:inline">·</span>
                   <span className="hidden sm:inline">{photos.length + videos.length} momentos</span>

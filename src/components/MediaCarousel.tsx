@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { MediaItem } from '../lib/supabase';
-import { ChevronLeftIcon, ChevronRightIcon, HeartIcon } from './Icons';
+import { ChevronLeftIcon, ChevronRightIcon, HeartIcon, PauseIcon, PlayIcon, VolumeIcon, VolumeMuteIcon } from './Icons';
 import { content } from '../config/content';
 
 type Slide = {
@@ -34,7 +34,9 @@ export default function MediaCarousel({ photos, videos }: { photos: MediaItem[];
   }, [photos, videos]);
 
   const [index, setIndex] = useState(0);
-  const [paused, setPaused] = useState(false);
+  const [muted, setMuted] = useState(true);
+  const [volume, setVolume] = useState(0.8);
+  const [videoPaused, setVideoPaused] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
   const next = useCallback(() => setIndex((i) => (i + 1) % slides.length), [slides.length]);
@@ -47,28 +49,40 @@ export default function MediaCarousel({ photos, videos }: { photos: MediaItem[];
   // foto: avança sozinho após alguns segundos
   useEffect(() => {
     const slide = slides[index];
-    if (!slide || slide.type !== 'photo' || paused || slides.length < 2) return;
+    if (!slide || slide.type !== 'photo' || slides.length < 2) return;
     const t = setTimeout(next, PHOTO_SLIDE_MS);
     return () => clearTimeout(t);
-  }, [index, paused, slides, next]);
+  }, [index, slides, next]);
 
-  // vídeo: toca (sem som) e avança quando termina
+  // vídeo: toca sozinho (mudo) e avança quando termina
   useEffect(() => {
     const slide = slides[index];
     const video = videoRef.current;
     if (!slide || slide.type !== 'video' || !video) return;
-    if (!paused) {
-      video.currentTime = 0;
-      video.play().catch(() => {});
-    } else {
-      video.pause();
-    }
-  }, [index, paused, slides]);
+    setVideoPaused(false);
+    video.volume = volume;
+    video.muted = muted;
+    video.currentTime = 0;
+    video.play().catch(() => setMuted(true));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [index, slides]);
 
+  // aplica volume/mudo ao vídeo ativo quando mudam
   useEffect(() => {
     const video = videoRef.current;
-    if (paused && video) video.pause();
-  }, [paused]);
+    if (video) {
+      video.volume = volume;
+      video.muted = muted;
+    }
+  }, [muted, volume]);
+
+  // pausa/retoma o vídeo ativo
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    if (videoPaused) video.pause();
+    else video.play().catch(() => {});
+  }, [videoPaused]);
 
   if (slides.length === 0) {
     return <EmptyCard text={`${content.emptyHints.photos} ${content.emptyHints.videos}`} />;
@@ -78,11 +92,7 @@ export default function MediaCarousel({ photos, videos }: { photos: MediaItem[];
 
   return (
     <div className="relative group">
-      <div
-        className="relative rounded-lg overflow-hidden bg-panel shadow-2xl"
-        onMouseEnter={() => setPaused(true)}
-        onMouseLeave={() => setPaused(false)}
-      >
+      <div className="relative rounded-lg overflow-hidden bg-panel shadow-2xl">
         <div className="relative h-[55vh] md:h-[70vh] w-full bg-black flex items-center justify-center">
           {slides.map((s, i) =>
             s.type === 'photo' ? (
@@ -100,8 +110,6 @@ export default function MediaCarousel({ photos, videos }: { photos: MediaItem[];
                 key={s.key}
                 ref={i === index ? videoRef : undefined}
                 src={s.url}
-                muted={!paused}
-                controls={paused}
                 playsInline
                 preload={i === index ? 'auto' : 'metadata'}
                 onEnded={next}
@@ -113,6 +121,40 @@ export default function MediaCarousel({ photos, videos }: { photos: MediaItem[];
             ),
           )}
         </div>
+
+        {/* controles do vídeo: play/pause, mudo e volume */}
+        {slide.type === 'video' && (
+          <div className="absolute bottom-3 right-3 flex items-center gap-2 rounded-full bg-black/60 backdrop-blur px-2.5 py-1.5">
+            <button
+              onClick={() => setVideoPaused((p) => !p)}
+              aria-label={videoPaused ? 'Tocar vídeo' : 'Pausar vídeo'}
+              className="text-white hover:text-spotify-bright transition"
+            >
+              {videoPaused ? <PlayIcon className="w-4 h-4" /> : <PauseIcon className="w-4 h-4" />}
+            </button>
+            <button
+              onClick={() => setMuted((m) => !m)}
+              aria-label={muted ? 'Ativar som' : 'Silenciar'}
+              className="text-white hover:text-spotify-bright transition"
+            >
+              {muted ? <VolumeMuteIcon className="w-4 h-4" /> : <VolumeIcon className="w-4 h-4" />}
+            </button>
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.01}
+              value={volume}
+              onChange={(e) => {
+                const v = Number(e.target.value);
+                setVolume(v);
+                if (v > 0 && muted) setMuted(false);
+              }}
+              aria-label="Volume do vídeo"
+              className="w-16 md:w-20 cursor-pointer"
+            />
+          </div>
+        )}
 
         {/* nome do momento */}
         <div className="absolute bottom-12 left-4 right-4 pointer-events-none">
@@ -163,7 +205,7 @@ export default function MediaCarousel({ photos, videos }: { photos: MediaItem[];
         )}
       </div>
       <p className="mt-2 text-xs text-muted text-center">
-        {paused ? 'Pausado — tire o mouse para continuar' : 'Passando sozinho — passe o mouse para pausar'}
+        Tudo passa sozinho — nos vídeos, use os controles para pausar e ajustar o volume
       </p>
     </div>
   );
