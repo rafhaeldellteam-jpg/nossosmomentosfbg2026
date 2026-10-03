@@ -32,14 +32,29 @@ async function listBucket(bucket: string, test: (n: string) => boolean): Promise
     limit: 200,
     sortBy: { column: 'name', order: 'asc' },
   });
-  if (error || !data) return [];
-  return data
-    .filter((f) => !f.id || test(f.name))
-    .filter((f) => test(f.name))
-    .map((f) => ({
-      name: f.name,
-      prettyName: pretty(f.name),
-      url: supabase.storage.from(bucket).getPublicUrl(f.name).data.publicUrl,
+  let names: string[] = [];
+  if (!error && data && data.length > 0) {
+    names = data.map((f) => f.name);
+  } else {
+    // fallback: lista explícita em manifest.json dentro do bucket
+    try {
+      const res = await fetch(supabase.storage.from(bucket).getPublicUrl('manifest.json').data.publicUrl, {
+        cache: 'no-store',
+      });
+      if (res.ok) {
+        const manifest = await res.json();
+        if (Array.isArray(manifest.files)) names = manifest.files;
+      }
+    } catch {
+      /* sem manifest — segue vazio */
+    }
+  }
+  return names
+    .filter((n) => test(n))
+    .map((n) => ({
+      name: n,
+      prettyName: pretty(n),
+      url: supabase.storage.from(bucket).getPublicUrl(n).data.publicUrl,
     }));
 }
 
