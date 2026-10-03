@@ -1,12 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Sidebar from './components/Sidebar';
 import PlayerBar from './components/PlayerBar';
-import PhotoCarousel from './components/PhotoCarousel';
-import VideoCarousel from './components/VideoCarousel';
+import MediaCarousel, { EmptyCard } from './components/MediaCarousel';
 import Declaration from './components/Declaration';
-import { EmptyCard } from './components/PhotoCarousel';
 import { HeartIcon } from './components/Icons';
-import { MusicIcon, PhotoIcon, VideoIcon } from './components/SectionIcons';
+import { MusicIcon, PhotoIcon } from './components/SectionIcons';
 import { listMusic, listPhotos, listVideos, type MediaItem } from './lib/supabase';
 import { content } from './config/content';
 
@@ -95,7 +93,6 @@ export default function App() {
     if (i >= 0) playIndex(i);
   }, [pickNextIndex, playIndex, progress]);
 
-  // sincroniza o elemento <audio> com o estado
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || !currentTrack) return;
@@ -130,7 +127,7 @@ export default function App() {
   };
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col bg-black">
       <audio
         ref={audioRef}
         onTimeUpdate={(e) => setProgress(e.currentTarget.currentTime)}
@@ -139,7 +136,7 @@ export default function App() {
         preload="metadata"
       />
 
-      <div className="flex-1 flex min-h-0">
+      <div className="flex-1 flex min-h-0 p-2 gap-2">
         <Sidebar
           tracks={tracks}
           currentIndex={currentIndex}
@@ -148,27 +145,39 @@ export default function App() {
           onSelect={playIndex}
         />
 
-        <main className="flex-1 overflow-y-auto pb-40 md:pb-28">
-          {/* topo hero */}
-          <header className="px-4 md:px-8 pt-6 md:pt-8">
-            <div className="flex md:hidden items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-rose-400 to-rose-600 flex items-center justify-center">
-                <HeartIcon className="w-5 h-5 text-white" />
+        <main className="flex-1 overflow-y-auto rounded-lg bg-panel pb-40 md:pb-28">
+          {/* topo estilo página de artista do Spotify */}
+          <header className="bg-gradient-to-b from-emerald-900/60 via-panel-highlight to-panel px-4 md:px-8 pt-6 md:pt-10 pb-8">
+            <div className="md:hidden flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-full bg-spotify flex items-center justify-center">
+                <HeartIcon className="w-5 h-5 text-black" />
               </div>
               <h1 className="font-bold text-lg">{content.coupleNames}</h1>
             </div>
 
-            <div className="rounded-3xl bg-gradient-to-r from-rose-500/15 via-rose-500/5 to-transparent border border-white/10 p-6 md:p-10">
-              <p className="text-xs uppercase tracking-[0.3em] text-rose-400/80 mb-3">Para o meu grande amor</p>
-              <h2 className="text-3xl md:text-5xl font-black tracking-tight mb-3">
-                {content.coupleNames}
-              </h2>
-              <p className="text-stone-400 max-w-xl leading-relaxed">{content.tagline}</p>
-              <div className="mt-5 inline-flex items-center gap-2 rounded-full bg-white/5 border border-white/10 px-4 py-1.5 text-sm text-stone-300">
-                <HeartIcon className="w-4 h-4 text-rose-400" />
-                <span>
-                  {days.toLocaleString('pt-BR')} {days === 1 ? 'dia' : 'dias'} juntos
-                </span>
+            <div className="flex flex-col md:flex-row md:items-end gap-6">
+              <div className="w-32 h-32 md:w-48 md:h-48 rounded shadow-2xl bg-gradient-to-br from-emerald-700 to-neutral-900 flex items-center justify-center overflow-hidden shrink-0">
+                {coverUrl ? (
+                  <img src={coverUrl} alt="capa" className="w-full h-full object-cover" />
+                ) : (
+                  <HeartIcon className="w-14 h-14 text-black/60" />
+                )}
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs uppercase tracking-[0.25em] text-white/70 mb-2">Perfil · Meu grande amor</p>
+                <h2 className="text-4xl md:text-7xl font-black tracking-tighter leading-none mb-4 break-words">
+                  {content.coupleNames}
+                </h2>
+                <div className="flex flex-wrap items-center gap-3 text-sm text-white/80">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1">
+                    <HeartIcon className="w-3.5 h-3.5 text-spotify-bright" />
+                    {days.toLocaleString('pt-BR')} {days === 1 ? 'dia' : 'dias'} juntos
+                  </span>
+                  <span>{tracks.length} {tracks.length === 1 ? 'música' : 'músicas'}</span>
+                  <span className="hidden sm:inline">·</span>
+                  <span className="hidden sm:inline">{photos.length + videos.length} momentos</span>
+                </div>
+                <p className="text-muted mt-3 max-w-xl leading-relaxed">{content.tagline}</p>
               </div>
             </div>
           </header>
@@ -176,9 +185,9 @@ export default function App() {
           <div className="px-4 md:px-8 mt-8 space-y-10">
             <Declaration />
 
-            {/* músicas mobile */}
+            {/* player mobile: lista de músicas */}
             <section className="md:hidden">
-              <SectionTitle icon={<MusicIcon className="w-5 h-5 text-rose-400" />} title={content.playlistName} />
+              <SectionTitle icon={<MusicIcon className="w-5 h-5 text-spotify" />} title={content.playlistName} />
               {loading ? (
                 <LoadingCard />
               ) : tracks.length === 0 ? (
@@ -189,11 +198,11 @@ export default function App() {
                     <li key={track.name}>
                       <button
                         onClick={() => playIndex(i)}
-                        className={`w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 ${
-                          i === currentIndex ? 'bg-rose-500/15 text-rose-300' : 'bg-white/[0.04] text-stone-300'
+                        className={`w-full text-left px-4 py-3 rounded-md flex items-center gap-3 ${
+                          i === currentIndex ? 'bg-panel-highlight text-spotify' : 'bg-white/[0.04] text-white'
                         }`}
                       >
-                        <span className="text-xs text-stone-500">{i + 1}</span>
+                        <span className="text-xs text-muted">{i + 1}</span>
                         <span className="flex-1 min-w-0 truncate text-sm">{track.prettyName}</span>
                       </button>
                     </li>
@@ -202,20 +211,18 @@ export default function App() {
               )}
             </section>
 
-            {/* fotos */}
+            {/* carrossel automático de fotos + vídeos */}
             <section>
-              <SectionTitle icon={<PhotoIcon className="w-5 h-5 text-rose-400" />} title="Nossos Momentos" />
-              {loading ? <LoadingCard /> : <PhotoCarousel photos={photos} />}
+              <SectionTitle icon={<PhotoIcon className="w-5 h-5 text-spotify" />} title="Nossos Momentos" />
+              {loading ? (
+                <LoadingCard />
+              ) : (
+                <MediaCarousel photos={photos} videos={videos} />
+              )}
             </section>
 
-            {/* vídeos */}
-            <section>
-              <SectionTitle icon={<VideoIcon className="w-5 h-5 text-rose-400" />} title="Nossos Vídeos" />
-              {loading ? <LoadingCard /> : <VideoCarousel videos={videos} />}
-            </section>
-
-            <footer className="text-center text-xs text-stone-600 pb-6">
-              Feito com <span className="text-rose-400">amor</span> — cada detalhe aqui é nosso.
+            <footer className="text-center text-xs text-muted/60 pb-6">
+              Feito com <span className="text-spotify-bright">amor</span> — cada detalhe aqui é nosso.
             </footer>
           </div>
         </main>
@@ -245,14 +252,14 @@ function SectionTitle({ icon, title }: { icon: ReactNode; title: string }) {
   return (
     <div className="flex items-center gap-2.5 mb-4">
       {icon}
-      <h3 className="text-lg font-bold tracking-tight">{title}</h3>
+      <h3 className="text-xl md:text-2xl font-bold tracking-tight hover:underline cursor-pointer">{title}</h3>
     </div>
   );
 }
 
 function LoadingCard() {
   return (
-    <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-10 text-center text-sm text-stone-500">
+    <div className="rounded-lg bg-panel-highlight p-10 text-center text-sm text-muted">
       Carregando nossos momentos...
     </div>
   );

@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import type { MediaItem } from '../lib/supabase';
 import {
   HeartIcon,
@@ -54,77 +53,74 @@ export default function PlayerBar(props: Props) {
     onToggleRepeat,
   } = props;
 
-  const [mobilePlaying, setMobilePlaying] = useState(false);
-
-  useEffect(() => {
-    if (playing) setMobilePlaying(false);
-  }, [playing]);
-
   return (
-    <footer className="fixed bottom-0 inset-x-0 z-40 border-t border-white/10 bg-stone-950/95 backdrop-blur">
+    <footer className="fixed bottom-0 inset-x-0 z-40 bg-black">
       {/* barra mobile */}
       {track && (
-        <div className="md:hidden flex items-center gap-3 px-4 py-2.5">
-          <button onClick={onToggle} aria-label={playing ? 'Pausar' : 'Tocar'} className="w-9 h-9 rounded-full bg-rose-500 flex items-center justify-center text-white shrink-0">
+        <div className="md:hidden flex items-center gap-3 px-4 py-2.5 border-t border-white/5">
+          <button onClick={onToggle} aria-label={playing ? 'Pausar' : 'Tocar'} className="w-9 h-9 rounded-full bg-white flex items-center justify-center text-black shrink-0">
             {playing ? <PauseIcon className="w-4 h-4" /> : <PlayIcon className="w-4 h-4 ml-0.5" />}
           </button>
           <div className="flex-1 min-w-0">
-            <p className="text-sm truncate text-stone-200">{track.prettyName}</p>
-            <p className="text-xs text-stone-500 truncate">{content.defaultArtist}</p>
+            <p className="text-sm truncate text-white">{track.prettyName}</p>
+            <p className="text-xs text-muted truncate">{content.defaultArtist}</p>
           </div>
-          <button onClick={onNext} aria-label="Próxima" className="text-stone-400 hover:text-white">
+          <button onClick={onNext} aria-label="Próxima" className="text-muted hover:text-white">
             <NextIcon className="w-5 h-5" />
           </button>
         </div>
       )}
 
-      {/* barra desktop */}
-      <div className="hidden md:grid grid-cols-[1fr_auto_1fr] items-center gap-4 px-5 h-20">
+      {/* barra desktop — layout Spotify */}
+      <div className="hidden md:grid grid-cols-[1fr_auto_1fr] items-center gap-4 px-4 h-[72px]">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-rose-500/40 to-rose-900/40 border border-white/10 flex items-center justify-center overflow-hidden">
-            {track ? <HeartIcon className="w-5 h-5 text-rose-400" /> : <span className="text-xs text-stone-600">--</span>}
+          <div className="w-14 h-14 rounded-md bg-panel-highlight flex items-center justify-center overflow-hidden border border-white/5">
+            {track ? <HeartIcon className="w-6 h-6 text-spotify" /> : <span className="text-xs text-neutral-600">--</span>}
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-medium truncate text-stone-100">
+            <p className="text-sm font-medium truncate text-white">
               {track ? track.prettyName : 'Escolha uma música'}
             </p>
-            <p className="text-xs text-stone-500 truncate">{track ? content.defaultArtist : 'Nossa trilha sonora'}</p>
+            <p className="text-xs text-muted truncate">{track ? content.defaultArtist : 'Nossa trilha sonora'}</p>
           </div>
+          {track && <HeartIcon className="w-4 h-4 text-spotify ml-2 shrink-0" />}
         </div>
 
         <div className="flex flex-col items-center gap-1.5">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-5">
             <button
               onClick={onToggleShuffle}
               aria-label="Aleatório"
-              className={shuffle ? 'text-rose-400' : 'text-stone-500 hover:text-stone-300'}
+              title="Aleatório"
+              className={shuffle ? 'text-spotify-bright' : 'text-muted hover:text-white'}
             >
               <ShuffleIcon className="w-4 h-4" />
             </button>
-            <button onClick={onPrev} aria-label="Anterior" className="text-stone-400 hover:text-white">
+            <button onClick={onPrev} aria-label="Anterior" className="text-muted hover:text-white">
               <PrevIcon className="w-5 h-5" />
             </button>
             <button
               onClick={onToggle}
               aria-label={playing ? 'Pausar' : 'Tocar'}
-              className="w-10 h-10 rounded-full bg-white text-stone-900 hover:scale-105 transition flex items-center justify-center"
+              className="w-8 h-8 rounded-full bg-white hover:scale-105 transition flex items-center justify-center text-black"
             >
-              {playing ? <PauseIcon className="w-4.5 h-4.5" /> : <PlayIcon className="w-4.5 h-4.5 ml-0.5" />}
+              {playing ? <PauseIcon className="w-4 h-4" /> : <PlayIcon className="w-4 h-4 ml-0.5" />}
             </button>
-            <button onClick={onNext} aria-label="Próxima" className="text-stone-400 hover:text-white">
+            <button onClick={onNext} aria-label="Próxima" className="text-muted hover:text-white">
               <NextIcon className="w-5 h-5" />
             </button>
             <button
               onClick={onToggleRepeat}
               aria-label="Repetir"
-              className={repeat ? 'text-rose-400' : 'text-stone-500 hover:text-stone-300'}
+              title="Repetir"
+              className={repeat ? 'text-spotify-bright' : 'text-muted hover:text-white'}
             >
               <RepeatIcon className="w-4 h-4" />
             </button>
           </div>
 
-          <div className="flex items-center gap-2 w-[380px] max-w-full">
-            <span className="text-[11px] text-stone-500 tabular-nums w-9 text-right">{formatTime(progress)}</span>
+          <div className="flex items-center gap-2 w-[420px] max-w-full">
+            <span className="text-[11px] text-muted tabular-nums w-9 text-right">{formatTime(progress)}</span>
             <input
               type="range"
               min={0}
@@ -133,14 +129,14 @@ export default function PlayerBar(props: Props) {
               value={Math.min(progress, duration || 0)}
               onChange={(e) => onSeek(Number(e.target.value))}
               aria-label="Progresso"
-              className="flex-1 h-1 accent-rose-400 cursor-pointer"
+              className="flex-1 cursor-pointer"
             />
-            <span className="text-[11px] text-stone-500 tabular-nums w-9">{formatTime(duration)}</span>
+            <span className="text-[11px] text-muted tabular-nums w-9">{formatTime(duration)}</span>
           </div>
         </div>
 
         <div className="flex items-center justify-end gap-2">
-          <VolumeIcon className="w-4 h-4 text-stone-500" />
+          <VolumeIcon className="w-4 h-4 text-muted" />
           <input
             type="range"
             min={0}
@@ -149,7 +145,7 @@ export default function PlayerBar(props: Props) {
             value={volume}
             onChange={(e) => onVolume(Number(e.target.value))}
             aria-label="Volume"
-            className="w-24 h-1 accent-rose-400 cursor-pointer"
+            className="w-24 cursor-pointer"
           />
         </div>
       </div>
