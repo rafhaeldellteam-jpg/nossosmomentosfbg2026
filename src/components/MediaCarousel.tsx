@@ -38,6 +38,7 @@ export default function MediaCarousel({ photos, videos }: { photos: MediaItem[];
   const [volume, setVolume] = useState(0.8);
   const [videoPaused, setVideoPaused] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const touchStartX = useRef<number | null>(null);
 
   const next = useCallback(() => setIndex((i) => (i + 1) % slides.length), [slides.length]);
   const prev = useCallback(() => setIndex((i) => (i - 1 + slides.length) % slides.length), [slides.length]);
@@ -63,7 +64,15 @@ export default function MediaCarousel({ photos, videos }: { photos: MediaItem[];
     video.volume = volume;
     video.muted = muted;
     video.currentTime = 0;
-    video.play().catch(() => setMuted(true));
+    // tenta com som; se o navegador bloquear, cai para mudo (autoplay permitido)
+    video.muted = false;
+    video.play().then(() => {
+      setMuted(false);
+    }).catch(() => {
+      video.muted = true;
+      setMuted(true);
+      video.play().catch(() => {});
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [index, slides]);
 
@@ -92,7 +101,21 @@ export default function MediaCarousel({ photos, videos }: { photos: MediaItem[];
 
   return (
     <div className="relative group">
-      <div className="relative rounded-lg overflow-hidden bg-panel shadow-2xl">
+      <div
+        className="relative rounded-lg overflow-hidden bg-panel shadow-2xl touch-pan-y"
+        onTouchStart={(e) => {
+          touchStartX.current = e.touches[0].clientX;
+        }}
+        onTouchEnd={(e) => {
+          if (touchStartX.current === null) return;
+          const dx = e.changedTouches[0].clientX - touchStartX.current;
+          if (Math.abs(dx) > 50) {
+            if (dx < 0) next();
+            else prev();
+          }
+          touchStartX.current = null;
+        }}
+      >
         <div className="relative h-[55vh] md:h-[70vh] w-full bg-black flex items-center justify-center">
           {slides.map((s, i) =>
             s.type === 'photo' ? (
@@ -110,11 +133,13 @@ export default function MediaCarousel({ photos, videos }: { photos: MediaItem[];
                 key={s.key}
                 ref={i === index ? videoRef : undefined}
                 src={s.url}
+                autoPlay={i === index}
                 playsInline
                 preload={i === index ? 'auto' : 'metadata'}
                 onEnded={next}
+                onClick={() => setVideoPaused((p) => !p)}
                 className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-700 ${
-                  i === index ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                  i === index ? 'opacity-100 cursor-pointer' : 'opacity-0 pointer-events-none'
                 }`}
                 draggable={false}
               />
@@ -124,20 +149,20 @@ export default function MediaCarousel({ photos, videos }: { photos: MediaItem[];
 
         {/* controles do vídeo: play/pause, mudo e volume */}
         {slide.type === 'video' && (
-          <div className="absolute bottom-3 right-3 flex items-center gap-2 rounded-full bg-black/60 backdrop-blur px-2.5 py-1.5">
+          <div className="absolute bottom-14 md:bottom-3 right-2 md:right-3 flex items-center gap-1 md:gap-2 rounded-full bg-black/70 backdrop-blur px-1.5 md:px-2.5 py-1 md:py-1.5">
             <button
               onClick={() => setVideoPaused((p) => !p)}
               aria-label={videoPaused ? 'Tocar vídeo' : 'Pausar vídeo'}
-              className="text-white hover:text-spotify-bright transition"
+              className="w-9 h-9 flex items-center justify-center text-white hover:text-spotify-bright active:scale-90 transition"
             >
-              {videoPaused ? <PlayIcon className="w-4 h-4" /> : <PauseIcon className="w-4 h-4" />}
+              {videoPaused ? <PlayIcon className="w-5 h-5" /> : <PauseIcon className="w-5 h-5" />}
             </button>
             <button
               onClick={() => setMuted((m) => !m)}
               aria-label={muted ? 'Ativar som' : 'Silenciar'}
-              className="text-white hover:text-spotify-bright transition"
+              className="w-9 h-9 flex items-center justify-center text-white hover:text-spotify-bright active:scale-90 transition"
             >
-              {muted ? <VolumeMuteIcon className="w-4 h-4" /> : <VolumeIcon className="w-4 h-4" />}
+              {muted ? <VolumeMuteIcon className="w-5 h-5" /> : <VolumeIcon className="w-5 h-5" />}
             </button>
             <input
               type="range"
@@ -151,13 +176,13 @@ export default function MediaCarousel({ photos, videos }: { photos: MediaItem[];
                 if (v > 0 && muted) setMuted(false);
               }}
               aria-label="Volume do vídeo"
-              className="w-16 md:w-20 cursor-pointer"
+              className="w-20 md:w-24 cursor-pointer"
             />
           </div>
         )}
 
         {/* nome do momento */}
-        <div className="absolute bottom-12 left-4 right-4 pointer-events-none">
+        <div className="absolute bottom-2 md:bottom-12 left-4 right-4 pointer-events-none">
           <p className="inline-block px-3 py-1.5 rounded bg-black/60 backdrop-blur text-sm text-white">
             {slide.prettyName}
           </p>
@@ -168,26 +193,28 @@ export default function MediaCarousel({ photos, videos }: { photos: MediaItem[];
             <button
               onClick={prev}
               aria-label="Anterior"
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white"
+              className="absolute left-2 md:left-3 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-black/60 hover:bg-black/80 opacity-70 md:opacity-0 md:group-hover:opacity-100 transition flex items-center justify-center text-white"
             >
-              <ChevronLeftIcon className="w-5 h-5" />
+              <ChevronLeftIcon className="w-6 h-6" />
             </button>
             <button
               onClick={next}
               aria-label="Próximo"
-              className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white"
+              className="absolute right-2 md:right-3 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-black/60 hover:bg-black/80 opacity-70 md:opacity-0 md:group-hover:opacity-100 transition flex items-center justify-center text-white"
             >
-              <ChevronRightIcon className="w-5 h-5" />
+              <ChevronRightIcon className="w-6 h-6" />
             </button>
 
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
+            <div className="absolute bottom-4 md:bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2 md:gap-1.5 px-3 py-1">
               {slides.map((s, i) => (
                 <button
                   key={s.key}
                   onClick={() => setIndex(i)}
                   aria-label={`Ir para ${i + 1}`}
-                  className={`h-1.5 rounded-full transition-all ${
-                    i === index ? 'w-6 bg-spotify-bright' : 'w-1.5 bg-white/50 hover:bg-white/80'
+                  className={`rounded-full transition-all ${
+                    i === index
+                      ? 'h-2.5 w-7 bg-spotify-bright'
+                      : 'h-2.5 w-2.5 bg-white/50 hover:bg-white/80'
                   }`}
                 />
               ))}
@@ -205,7 +232,7 @@ export default function MediaCarousel({ photos, videos }: { photos: MediaItem[];
         )}
       </div>
       <p className="mt-2 text-xs text-muted text-center">
-        Tudo passa sozinho — nos vídeos, use os controles para pausar e ajustar o volume
+        Tudo passa sozinho — arraste para navegar, toque no vídeo para pausar e ajuste o volume quando quiser
       </p>
     </div>
   );
