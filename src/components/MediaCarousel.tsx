@@ -21,13 +21,17 @@ export function EmptyCard({ text }: { text: string }) {
 }
 
 export default function MediaCarousel({ photos, videos }: { photos: MediaItem[]; videos: MediaItem[] }) {
-  const slides: Slide[] = useMemo(
-    () => [
+  const slides: Slide[] = useMemo(() => {
+    // vídeo "Abertura" (ou primeiro vídeo, se houver) entra como primeiro slide
+    const lead = videos[0]
+      ? [{ key: `v-${videos[0].name}`, type: 'video' as const, url: videos[0].url, prettyName: videos[0].prettyName }]
+      : [];
+    return [
+      ...lead,
       ...photos.map((p) => ({ key: `p-${p.name}`, type: 'photo' as const, url: p.url, prettyName: p.prettyName })),
-      ...videos.map((v) => ({ key: `v-${v.name}`, type: 'video' as const, url: v.url, prettyName: v.prettyName })),
-    ],
-    [photos, videos],
-  );
+      ...videos.slice(1).map((v) => ({ key: `v-${v.name}`, type: 'video' as const, url: v.url, prettyName: v.prettyName })),
+    ];
+  }, [photos, videos]);
 
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -96,7 +100,8 @@ export default function MediaCarousel({ photos, videos }: { photos: MediaItem[];
                 key={s.key}
                 ref={i === index ? videoRef : undefined}
                 src={s.url}
-                muted
+                muted={!paused}
+                controls={paused}
                 playsInline
                 preload={i === index ? 'auto' : 'metadata'}
                 onEnded={next}
