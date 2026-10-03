@@ -38,9 +38,10 @@ async function listBucket(bucket: string, test: (n: string) => boolean): Promise
   } else {
     // fallback: lista explícita em manifest.json dentro do bucket
     try {
-      const res = await fetch(supabase.storage.from(bucket).getPublicUrl('manifest.json').data.publicUrl, {
-        cache: 'no-store',
-      });
+      const manifestUrl =
+        supabase.storage.from(bucket).getPublicUrl('manifest.json').data.publicUrl +
+        `?t=${Date.now()}`;
+      const res = await fetch(manifestUrl, { cache: 'no-store' });
       if (res.ok) {
         const manifest = await res.json();
         if (Array.isArray(manifest.files)) names = manifest.files;

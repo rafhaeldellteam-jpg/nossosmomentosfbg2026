@@ -6,3 +6,8 @@ dist
 *.tsbuildinfo
 .vercel
 .verdentc.json
+
+.vercel
+.env*
+user-media/ 
+scripts/ 
