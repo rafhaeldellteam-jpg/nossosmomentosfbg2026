@@ -79,14 +79,14 @@ export default function MediaCarousel({ photos, videos }: { photos: MediaItem[];
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
       >
-        <div className="aspect-[16/9] md:aspect-[21/9] w-full">
+        <div className="relative h-[55vh] md:h-[70vh] w-full bg-black flex items-center justify-center">
           {slides.map((s, i) =>
             s.type === 'photo' ? (
               <img
                 key={s.key}
                 src={s.url}
                 alt={s.prettyName}
-                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${
+                className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-700 ${
                   i === index ? 'opacity-100' : 'opacity-0'
                 }`}
                 draggable={false}
@@ -100,7 +100,7 @@ export default function MediaCarousel({ photos, videos }: { photos: MediaItem[];
                 playsInline
                 preload={i === index ? 'auto' : 'metadata'}
                 onEnded={next}
-                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${
+                className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-700 ${
                   i === index ? 'opacity-100' : 'opacity-0 pointer-events-none'
                 }`}
                 draggable={false}
