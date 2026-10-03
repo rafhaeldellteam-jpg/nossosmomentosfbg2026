@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/vite-env.d.ts","./src/components/declaration.tsx","./src/components/icons.tsx","./src/components/photocarousel.tsx","./src/components/playerbar.tsx","./src/components/sectionicons.tsx","./src/components/sidebar.tsx","./src/components/videocarousel.tsx","./src/config/content.ts","./src/lib/supabase.ts"],"version":"5.8.3"}

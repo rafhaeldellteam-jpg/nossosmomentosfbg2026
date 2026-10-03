@@ -1,0 +1,30 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-accent: #fb7185;
+  --color-accent-strong: #f43f5e;
+  --font-serif: Georgia, 'Times New Roman', serif;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background: linear-gradient(160deg, #0c0a09 0%, #1c1017 55%, #0c0a09 100%);
+  color: #e7e5e4;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: #44403c;
+  border-radius: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
