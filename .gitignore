@@ -3,4 +3,5 @@ dist
 .env
 .env.local
 *.local
+*.tsbuildinfo
 .verdentc.json
