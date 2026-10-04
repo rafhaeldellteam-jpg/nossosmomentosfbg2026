@@ -11,3 +11,4 @@ dist
 .env*
 user-media/ 
 scripts/ 
+"tmp-media/"  
