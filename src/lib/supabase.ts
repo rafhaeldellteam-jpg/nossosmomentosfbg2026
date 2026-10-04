@@ -62,3 +62,40 @@ async function listBucket(bucket: string, test: (n: string) => boolean): Promise
 export const listMusic = () => listBucket('music', (n) => AUDIO_EXT.test(n));
 export const listPhotos = () => listBucket('photos', (n) => IMAGE_EXT.test(n));
 export const listVideos = () => listBucket('videos', (n) => VIDEO_EXT.test(n));
+
+// ---------- ordem do carrossel (painel admin) ----------
+
+export type Slide = {
+  key: string; // "photo:NOME" | "video:NOME"
+  type: 'photo' | 'video';
+  url: string;
+  prettyName: string;
+};
+
+export async function getCarouselOrder(): Promise<string[] | null> {
+  try {
+    const { data, error } = await supabase
+      .from('media_order')
+      .select('data')
+      .eq('id', 1)
+      .maybeSingle();
+    if (error || !data) return null;
+    const arr = (data as { data?: { carousel?: unknown } }).data?.carousel;
+    return Array.isArray(arr) && arr.length > 0 ? (arr as string[]) : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function saveCarouselOrder(keys: string[]): Promise<boolean> {
+  try {
+    const { error } = await supabase.from('media_order').upsert({
+      id: 1,
+      data: { carousel: keys },
+      updated_at: new Date().toISOString(),
+    });
+    return !error;
+  } catch {
+    return false;
+  }
+}

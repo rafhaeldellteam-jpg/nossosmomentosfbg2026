@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Sidebar from './components/Sidebar';
 import PlayerBar from './components/PlayerBar';
 import MediaCarousel, { EmptyCard } from './components/MediaCarousel';
@@ -6,7 +6,14 @@ import Declaration from './components/Declaration';
 import DaysCounter from './components/DaysCounter';
 import { HeartIcon } from './components/Icons';
 import { MusicIcon, PhotoIcon } from './components/SectionIcons';
-import { listMusic, listPhotos, listVideos, type MediaItem } from './lib/supabase';
+import {
+  getCarouselOrder,
+  listMusic,
+  listPhotos,
+  listVideos,
+  type MediaItem,
+  type Slide,
+} from './lib/supabase';
 import { content } from './config/content';
 
 const startDate = new Date(
@@ -21,6 +28,7 @@ export default function App() {
   const [tracks, setTracks] = useState<MediaItem[]>([]);
   const [photos, setPhotos] = useState<MediaItem[]>([]);
   const [videos, setVideos] = useState<MediaItem[]>([]);
+  const [order, setOrder] = useState<string[] | null>(null);
   const [loading, setLoading] = useState(true);
 
   const [currentIndex, setCurrentIndex] = useState(-1);
@@ -35,13 +43,16 @@ export default function App() {
 
   useEffect(() => {
     let alive = true;
-    Promise.all([listMusic(), listPhotos(), listVideos()]).then(([m, p, v]) => {
-      if (!alive) return;
-      setTracks(m);
-      setPhotos(p);
-      setVideos(v);
-      setLoading(false);
-    });
+    Promise.all([listMusic(), listPhotos(), listVideos(), getCarouselOrder()]).then(
+      ([m, p, v, o]) => {
+        if (!alive) return;
+        setTracks(m);
+        setPhotos(p);
+        setVideos(v);
+        setOrder(o);
+        setLoading(false);
+      },
+    );
     return () => {
       alive = false;
     };
@@ -49,6 +60,49 @@ export default function App() {
 
   const currentTrack = currentIndex >= 0 ? tracks[currentIndex] ?? null : null;
   const coverUrl = photos.length > 0 ? photos[0].url : null;
+
+  // ordem do carrossel: salva no painel admin ou padrão (abertura, fotos, vídeos)
+  const slides: Slide[] = useMemo(() => {
+    const byKey = new Map<string, Slide>();
+    for (const v of videos)
+      byKey.set(`video:${v.name}`, {
+        key: `video:${v.name}`,
+        type: 'video',
+        url: v.url,
+        prettyName: v.prettyName,
+      });
+    for (const p of photos)
+      byKey.set(`photo:${p.name}`, {
+        key: `photo:${p.name}`,
+        type: 'photo',
+        url: p.url,
+        prettyName: p.prettyName,
+      });
+    if (order && order.length > 0) {
+      const arr = order.map((k) => byKey.get(k)).filter(Boolean) as Slide[];
+      for (const [k, s] of byKey) if (!order.includes(k)) arr.push(s);
+      return arr;
+    }
+    const firstVideo = videos[0]
+      ? byKey.get(`video:${videos[0].name}`) ?? null
+      : null;
+    const arr: Slide[] = [];
+    if (firstVideo) arr.push(firstVideo);
+    for (const p of photos) arr.push(byKey.get(`photo:${p.name}`) ?? {
+      key: `photo:${p.name}`,
+      type: 'photo',
+      url: p.url,
+      prettyName: p.prettyName,
+    });
+    for (const v of videos.slice(firstVideo ? 1 : 0))
+      arr.push(byKey.get(`video:${v.name}`) ?? {
+        key: `video:${v.name}`,
+        type: 'video',
+        url: v.url,
+        prettyName: v.prettyName,
+      });
+    return arr;
+  }, [photos, videos, order]);
 
   const pickNextIndex = useCallback(
     (dir: 1 | -1) => {
@@ -214,13 +268,18 @@ export default function App() {
               <SectionTitle icon={<PhotoIcon className="w-5 h-5 text-spotify" />} title="Nossos Momentos" />
               {loading ? (
                 <LoadingCard />
+              ) : slides.length === 0 ? (
+                <EmptyCard text={`${content.emptyHints.photos} ${content.emptyHints.videos}`} />
               ) : (
-                <MediaCarousel photos={photos} videos={videos} />
+                <MediaCarousel slides={slides} />
               )}
             </section>
 
             <footer className="text-center text-xs text-muted/60 pb-6">
               Feito com <span className="text-spotify-bright">amor</span> — cada detalhe aqui é nosso.
+              <a href="#/admin" className="ml-2 text-muted/40 hover:text-muted underline">
+                organizar mídias
+              </a>
             </footer>
           </div>
         </main>
