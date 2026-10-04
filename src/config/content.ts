@@ -43,7 +43,8 @@ export const content = {
       'E obrigado por, de alguma forma, ter aparecido na minha vida quando eu mais precisava.',
       'Eu te amo, Fernanda.',
     ],
-    signature: '',
+    signature: 'Com amor,',
+    signatureName: 'Rafhael',
   },
 
   // Nome que aparece na playlist do lado esquerdo

@@ -18,8 +18,13 @@ export default function Declaration() {
             {paragraph}
           </p>
         ))}
-        {content.declaration.signature && (
-          <p className="font-serif italic text-spotify-bright/90 pt-2">{content.declaration.signature}</p>
+        {(content.declaration.signature || content.declaration.signatureName) && (
+          <p className="font-serif italic text-spotify-bright/90 pt-2">
+            {content.declaration.signature}{' '}
+            <span className="text-spotify-bright font-semibold not-italic">
+              {content.declaration.signatureName}
+            </span>
+          </p>
         )}
       </div>
     </section>
