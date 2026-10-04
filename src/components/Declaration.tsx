@@ -18,7 +18,9 @@ export default function Declaration() {
             {paragraph}
           </p>
         ))}
-        <p className="font-serif italic text-spotify-bright/90 pt-2">{content.declaration.signature}</p>
+        {content.declaration.signature && (
+          <p className="font-serif italic text-spotify-bright/90 pt-2">{content.declaration.signature}</p>
+        )}
       </div>
     </section>
   );
