@@ -74,3 +74,11 @@ input[type='range']:hover {
 .animate-count-in {
   animation: count-in 0.45s ease;
 }
+
+@keyframes slide-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
+}

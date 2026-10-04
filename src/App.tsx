@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Sidebar from './components/Sidebar';
-import PlayerBar from './components/PlayerBar';
+import PlayerBar, { type RepeatMode } from './components/PlayerBar';
 import MediaCarousel, { EmptyCard } from './components/MediaCarousel';
 import Declaration from './components/Declaration';
 import DaysCounter from './components/DaysCounter';
 import { HeartIcon } from './components/Icons';
-import { MusicIcon, PhotoIcon } from './components/SectionIcons';
+import { PhotoIcon } from './components/SectionIcons';
 import {
   getCarouselOrder,
   listMusic,
@@ -34,7 +34,7 @@ export default function App() {
   const [currentIndex, setCurrentIndex] = useState(-1);
   const [playing, setPlaying] = useState(false);
   const [shuffle, setShuffle] = useState(false);
-  const [repeat, setRepeat] = useState(false);
+  const [repeatMode, setRepeatMode] = useState<RepeatMode>('all');
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(0.8);
@@ -217,12 +217,22 @@ export default function App() {
   };
 
   const onEnded = () => {
-    if (repeat) {
+    if (repeatMode === 'one') {
       seek(0);
       audioRef.current?.play().catch(() => {});
-    } else {
-      next();
+      return;
     }
+    if (repeatMode === 'all') {
+      next();
+      return;
+    }
+    // sem repetição: para ao terminar a última faixa
+    if (!shuffle && currentIndex >= tracks.length - 1) {
+      setPlaying(false);
+      if (audioRef.current) audioRef.current.currentTime = 0;
+      return;
+    }
+    next();
   };
 
   return (
@@ -281,32 +291,6 @@ export default function App() {
           <div className="px-4 md:px-8 mt-8 space-y-10">
             <Declaration />
 
-            {/* player mobile: lista de músicas */}
-            <section className="md:hidden">
-              <SectionTitle icon={<MusicIcon className="w-5 h-5 text-spotify" />} title={content.playlistName} />
-              {loading ? (
-                <LoadingCard />
-              ) : tracks.length === 0 ? (
-                <EmptyCard text={content.emptyHints.music} />
-              ) : (
-                <ul className="space-y-1">
-                  {tracks.map((track, i) => (
-                    <li key={track.name}>
-                      <button
-                        onClick={() => playIndex(i)}
-                        className={`w-full text-left px-4 py-3 rounded-md flex items-center gap-3 ${
-                          i === currentIndex ? 'bg-panel-highlight text-spotify' : 'bg-white/[0.04] text-white'
-                        }`}
-                      >
-                        <span className="text-xs text-muted">{i + 1}</span>
-                        <span className="flex-1 min-w-0 truncate text-sm">{track.prettyName}</span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-
             {/* carrossel automático de fotos + vídeos */}
             <section ref={carouselSectionRef}>
               <SectionTitle icon={<PhotoIcon className="w-5 h-5 text-spotify" />} title="Nossos Momentos" />
@@ -330,20 +314,26 @@ export default function App() {
       </div>
 
       <PlayerBar
+        tracks={tracks}
+        currentIndex={currentIndex}
         track={currentTrack}
         playing={playing}
         shuffle={shuffle}
-        repeat={repeat}
+        repeatMode={repeatMode}
         progress={progress}
         duration={duration}
         volume={volume}
+        coverUrl={coverUrl}
         onToggle={togglePlay}
         onNext={next}
         onPrev={prev}
         onSeek={seek}
         onVolume={changeVolume}
         onToggleShuffle={() => setShuffle((s) => !s)}
-        onToggleRepeat={() => setRepeat((r) => !r)}
+        onToggleRepeat={() =>
+          setRepeatMode((m) => (m === 'off' ? 'all' : m === 'all' ? 'one' : 'off'))
+        }
+        onSelectTrack={playIndex}
       />
     </div>
   );
