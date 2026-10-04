@@ -33,10 +33,12 @@ async function listBucket(bucket: string, test: (n: string) => boolean): Promise
     sortBy: { column: 'name', order: 'asc' },
   });
   let names: string[] = [];
+  const titles = new Map<string, string>();
   if (!error && data && data.length > 0) {
     names = data.map((f) => f.name);
   } else {
     // fallback: lista explícita em manifest.json dentro do bucket
+    // itens podem ser "nome.mp3" ou { name, title } (título bonito com acentos)
     try {
       const manifestUrl =
         supabase.storage.from(bucket).getPublicUrl('manifest.json').data.publicUrl +
@@ -44,7 +46,15 @@ async function listBucket(bucket: string, test: (n: string) => boolean): Promise
       const res = await fetch(manifestUrl, { cache: 'no-store' });
       if (res.ok) {
         const manifest = await res.json();
-        if (Array.isArray(manifest.files)) names = manifest.files;
+        if (Array.isArray(manifest.files)) {
+          for (const item of manifest.files) {
+            if (typeof item === 'string') names.push(item);
+            else if (item && typeof item.name === 'string') {
+              names.push(item.name);
+              if (typeof item.title === 'string') titles.set(item.name, item.title);
+            }
+          }
+        }
       }
     } catch {
       /* sem manifest — segue vazio */
@@ -54,7 +64,7 @@ async function listBucket(bucket: string, test: (n: string) => boolean): Promise
     .filter((n) => test(n))
     .map((n) => ({
       name: n,
-      prettyName: pretty(n),
+      prettyName: titles.get(n) ?? pretty(n),
       url: supabase.storage.from(bucket).getPublicUrl(n).data.publicUrl,
     }));
 }
