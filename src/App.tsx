@@ -59,7 +59,8 @@ export default function App() {
   }, []);
 
   const currentTrack = currentIndex >= 0 ? tracks[currentIndex] ?? null : null;
-  const coverUrl = photos.length > 0 ? photos[0].url : null;
+  // capa do álbum: IMG_1847 (ou a primeira foto, como fallback)
+  const coverUrl = (photos.find((p) => /IMG_1847/i.test(p.name)) ?? photos[0])?.url ?? null;
 
   // ordem do carrossel: salva no painel admin ou padrão (abertura, fotos, vídeos)
   const slides: Slide[] = useMemo(() => {
@@ -131,8 +132,9 @@ export default function App() {
       playIndex(0);
       return;
     }
+    pausedByUserRef.current = playing; // se estava tocando, o usuário está pausando de propósito
     setPlaying((p) => !p);
-  }, [currentIndex, tracks.length, playIndex]);
+  }, [currentIndex, tracks.length, playIndex, playing]);
 
   const next = useCallback(() => {
     const i = pickNextIndex(1);
@@ -161,6 +163,48 @@ export default function App() {
       audio.pause();
     }
   }, [currentTrack, playing]);
+
+  // música começa junto com a apresentação das mídias
+  const carouselSectionRef = useRef<HTMLElement | null>(null);
+  const autoStartRef = useRef(false);
+  const pausedByUserRef = useRef(false);
+
+  useEffect(() => {
+    if (loading || tracks.length === 0 || slides.length === 0) return;
+    const tryStart = () => {
+      if (autoStartRef.current) return;
+      autoStartRef.current = true;
+      setCurrentIndex((i) => (i < 0 ? 0 : i));
+      setPlaying(true);
+    };
+    const kick = () => {
+      // se o navegador bloqueou o autoplay com som, começa no primeiro toque
+      if (autoStartRef.current && !pausedByUserRef.current && currentIndex >= 0 && !playing) {
+        setPlaying(true);
+      }
+    };
+    window.addEventListener('pointerdown', kick);
+    const el = carouselSectionRef.current;
+    let obs: IntersectionObserver | null = null;
+    if (el) {
+      obs = new IntersectionObserver(
+        (entries) => {
+          if (entries.some((e) => e.isIntersecting)) {
+            tryStart();
+            obs?.disconnect();
+          }
+        },
+        { threshold: 0.25 },
+      );
+      obs.observe(el);
+    } else {
+      tryStart();
+    }
+    return () => {
+      window.removeEventListener('pointerdown', kick);
+      obs?.disconnect();
+    };
+  }, [loading, tracks.length, slides.length, currentIndex, playing]);
 
   const seek = (seconds: number) => {
     if (audioRef.current) audioRef.current.currentTime = seconds;
@@ -264,7 +308,7 @@ export default function App() {
             </section>
 
             {/* carrossel automático de fotos + vídeos */}
-            <section>
+            <section ref={carouselSectionRef}>
               <SectionTitle icon={<PhotoIcon className="w-5 h-5 text-spotify" />} title="Nossos Momentos" />
               {loading ? (
                 <LoadingCard />
