@@ -32,35 +32,37 @@ async function listBucket(bucket: string, test: (n: string) => boolean): Promise
     limit: 200,
     sortBy: { column: 'name', order: 'asc' },
   });
-  let names: string[] = [];
+  const listNames = !error && data ? data.map((f) => f.name) : [];
   const titles = new Map<string, string>();
-  if (!error && data && data.length > 0) {
-    names = data.map((f) => f.name);
-  } else {
-    // fallback: lista explícita em manifest.json dentro do bucket
-    // itens podem ser "nome.mp3" ou { name, title } (título bonito com acentos)
-    try {
-      const manifestUrl =
-        supabase.storage.from(bucket).getPublicUrl('manifest.json').data.publicUrl +
-        `?t=${Date.now()}`;
-      const res = await fetch(manifestUrl, { cache: 'no-store' });
-      if (res.ok) {
-        const manifest = await res.json();
-        if (Array.isArray(manifest.files)) {
-          for (const item of manifest.files) {
-            if (typeof item === 'string') names.push(item);
-            else if (item && typeof item.name === 'string') {
-              names.push(item.name);
-              if (typeof item.title === 'string') titles.set(item.name, item.title);
-            }
+
+  // o manifest (quando existe) manda: ordem e títulos bonitos
+  // itens podem ser "nome.mp3" ou { name, title }
+  let names: string[] | null = null;
+  try {
+    const manifestUrl =
+      supabase.storage.from(bucket).getPublicUrl('manifest.json').data.publicUrl +
+      `?t=${Math.floor(Date.now() / 60_000)}`;
+    const res = await fetch(manifestUrl, { cache: 'no-store' });
+    if (res.ok) {
+      const manifest = await res.json();
+      if (Array.isArray(manifest.files) && manifest.files.length > 0) {
+        names = [];
+        for (const item of manifest.files) {
+          if (typeof item === 'string') names.push(item);
+          else if (item && typeof item.name === 'string') {
+            names.push(item.name);
+            if (typeof item.title === 'string') titles.set(item.name, item.title);
           }
         }
+        // arquivos novos que ainda não estão no manifest vão para o fim
+        for (const n of listNames) if (!names.includes(n)) names.push(n);
       }
-    } catch {
-      /* sem manifest — segue vazio */
     }
+  } catch {
+    /* sem manifest — usa a listagem do storage */
   }
-  return names
+
+  return (names ?? listNames)
     .filter((n) => test(n))
     .map((n) => ({
       name: n,
