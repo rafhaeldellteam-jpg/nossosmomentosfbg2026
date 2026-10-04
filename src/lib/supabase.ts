@@ -71,11 +71,21 @@ async function listBucket(bucket: string, test: (n: string) => boolean): Promise
     }));
 }
 
-export const listMusic = () => listBucket('music', (n) => AUDIO_EXT.test(n));
+export const listMusic = async () => {
+  const tracks = await listBucket('music', (n) => AUDIO_EXT.test(n));
+  const order = await getMusicOrder();
+  if (!order || order.length === 0) return tracks;
+  const idx = new Map(order.map((n, i) => [n, i] as const));
+  return [...tracks].sort((a, b) => {
+    const ia = idx.get(a.name) ?? Number.MAX_SAFE_INTEGER;
+    const ib = idx.get(b.name) ?? Number.MAX_SAFE_INTEGER;
+    return ia - ib;
+  });
+};
 export const listPhotos = () => listBucket('photos', (n) => IMAGE_EXT.test(n));
 export const listVideos = () => listBucket('videos', (n) => VIDEO_EXT.test(n));
 
-// ---------- ordem do carrossel (painel admin) ----------
+// ---------- ordens salvas (painel admin) ----------
 
 export type Slide = {
   key: string; // "photo:NOME" | "video:NOME"
@@ -84,7 +94,9 @@ export type Slide = {
   prettyName: string;
 };
 
-export async function getCarouselOrder(): Promise<string[] | null> {
+type SavedData = { carousel?: string[]; music?: string[] };
+
+async function readSavedData(): Promise<SavedData | null> {
   try {
     const { data, error } = await supabase
       .from('media_order')
@@ -92,18 +104,31 @@ export async function getCarouselOrder(): Promise<string[] | null> {
       .eq('id', 1)
       .maybeSingle();
     if (error || !data) return null;
-    const arr = (data as { data?: { carousel?: unknown } }).data?.carousel;
-    return Array.isArray(arr) && arr.length > 0 ? (arr as string[]) : null;
+    const d = (data as { data?: SavedData }).data;
+    return d && typeof d === 'object' ? d : null;
   } catch {
     return null;
   }
 }
 
-export async function saveCarouselOrder(keys: string[]): Promise<boolean> {
+export async function getCarouselOrder(): Promise<string[] | null> {
+  const d = await readSavedData();
+  const arr = d?.carousel;
+  return Array.isArray(arr) && arr.length > 0 ? arr : null;
+}
+
+export async function getMusicOrder(): Promise<string[] | null> {
+  const d = await readSavedData();
+  const arr = d?.music;
+  return Array.isArray(arr) && arr.length > 0 ? arr : null;
+}
+
+/** Salva as duas ordens juntas (o painel sempre envia as duas). */
+export async function saveOrders(carousel: string[], music: string[]): Promise<boolean> {
   try {
     const { error } = await supabase.from('media_order').upsert({
       id: 1,
-      data: { carousel: keys },
+      data: { carousel, music },
       updated_at: new Date().toISOString(),
     });
     return !error;
