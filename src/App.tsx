@@ -289,8 +289,6 @@ export default function App() {
           </header>
 
           <div className="px-4 md:px-8 mt-8 space-y-10">
-            <Declaration />
-
             {/* carrossel automático de fotos + vídeos */}
             <section ref={carouselSectionRef}>
               <SectionTitle icon={<PhotoIcon className="w-5 h-5 text-spotify" />} title="Nossos Momentos" />
@@ -302,6 +300,8 @@ export default function App() {
                 <MediaCarousel slides={slides} />
               )}
             </section>
+
+            <Declaration />
 
             <footer className="text-center text-xs text-muted/60 pb-6">
               Feito com <span className="text-spotify-bright">amor</span> — cada detalhe aqui é nosso.
