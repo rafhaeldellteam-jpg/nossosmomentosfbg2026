@@ -72,3 +72,23 @@ export const ChevronDownIcon = ({ className = 'w-6 h-6' }: IconProps) => (
     <path d="M6 9l6 6 6-6" />
   </svg>
 );
+
+export const HomeIcon = ({ className = 'w-6 h-6' }: IconProps) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+    <path d="M12.5 3.35a1 1 0 00-1 0l-8 5.54A1 1 0 003 9.7V20a1 1 0 001 1h5v-6.5h6V21h5a1 1 0 001-1V9.7a1 1 0 00-.5-.86l-8-5.5z" />
+  </svg>
+);
+
+export const LibraryIcon = ({ className = 'w-6 h-6' }: IconProps) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+    <rect x="3" y="3" width="2.6" height="18" rx="1.3" />
+    <rect x="8.2" y="3" width="2.6" height="18" rx="1.3" />
+    <rect x="14.5" y="4.1" width="2.6" height="17" rx="1.3" transform="rotate(19 15.8 12.6)" />
+  </svg>
+);
+
+export const VolumeLowIcon = ({ className = 'w-5 h-5' }: IconProps) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+    <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0014 8v8a4.5 4.5 0 002.5-4z" />
+  </svg>
+);

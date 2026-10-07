@@ -4,8 +4,8 @@ import PlayerBar, { type RepeatMode } from './components/PlayerBar';
 import MediaCarousel, { EmptyCard } from './components/MediaCarousel';
 import Declaration from './components/Declaration';
 import DaysCounter from './components/DaysCounter';
-import { HeartIcon } from './components/Icons';
-import { PhotoIcon } from './components/SectionIcons';
+import { HeartIcon, HomeIcon, LibraryIcon, PauseIcon, PlayIcon, ShuffleIcon } from './components/Icons';
+import { MusicIcon, PhotoIcon } from './components/SectionIcons';
 import {
   getCarouselOrder,
   listMusic,
@@ -38,8 +38,11 @@ export default function App() {
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(0.8);
+  const [playerExpanded, setPlayerExpanded] = useState(false);
+  const [activeTab, setActiveTab] = useState<'inicio' | 'momentos' | 'biblioteca'>('inicio');
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const mainRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -216,6 +219,19 @@ export default function App() {
     if (audioRef.current) audioRef.current.volume = v;
   };
 
+  const goToTab = (tab: 'inicio' | 'momentos' | 'biblioteca') => {
+    setActiveTab(tab);
+    if (tab === 'inicio') {
+      setPlayerExpanded(false);
+      mainRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (tab === 'momentos') {
+      setPlayerExpanded(false);
+      carouselSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      setPlayerExpanded(true);
+    }
+  };
+
   const onEnded = () => {
     if (repeatMode === 'one') {
       seek(0);
@@ -254,7 +270,7 @@ export default function App() {
           onSelect={playIndex}
         />
 
-        <main className="flex-1 overflow-y-auto rounded-lg bg-panel pb-40 md:pb-28">
+        <main ref={mainRef} className="flex-1 overflow-y-auto rounded-lg bg-panel pb-48 md:pb-28">
           {/* topo estilo página de artista do Spotify */}
           <header className="bg-gradient-to-b from-emerald-900/60 via-panel-highlight to-panel px-4 md:px-8 pt-6 md:pt-10 pb-8">
             <div className="md:hidden flex items-center gap-3 mb-6">
@@ -301,6 +317,71 @@ export default function App() {
               )}
             </section>
 
+            {/* playlist estilo Spotify — visível no celular (no desktop fica na barra lateral) */}
+            <section className="md:hidden">
+              <SectionTitle icon={<MusicIcon className="w-5 h-5 text-spotify" />} title={content.playlistName} />
+              {loading ? (
+                <LoadingCard />
+              ) : tracks.length === 0 ? (
+                <EmptyCard text={content.emptyHints.music} />
+              ) : (
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <button
+                      onClick={() => setShuffle((s) => !s)}
+                      aria-label="Aleatório"
+                      className={`relative p-2 ${shuffle ? 'text-spotify-bright' : 'text-muted'}`}
+                    >
+                      <ShuffleIcon className="w-6 h-6" />
+                      {shuffle && (
+                        <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-spotify-bright" />
+                      )}
+                    </button>
+                    <button
+                      onClick={() => (playing ? setPlaying(false) : playIndex(currentIndex >= 0 ? currentIndex : 0))}
+                      aria-label={playing ? 'Pausar' : 'Tocar playlist'}
+                      className="w-14 h-14 rounded-full bg-spotify hover:bg-spotify-bright flex items-center justify-center text-black shadow-lg active:scale-95 transition"
+                    >
+                      {playing ? (
+                        <PauseIcon className="w-6 h-6" />
+                      ) : (
+                        <PlayIcon className="w-6 h-6 ml-0.5" />
+                      )}
+                    </button>
+                  </div>
+                  <ul className="-mx-2">
+                    {tracks.map((t, i) => (
+                      <li key={t.name}>
+                        <button
+                          onClick={() => playIndex(i)}
+                          className={`w-full text-left px-2 py-2 rounded-md flex items-center gap-3 ${
+                            i === currentIndex ? 'bg-white/10' : 'active:bg-white/5'
+                          }`}
+                        >
+                          <div className="w-11 h-11 rounded bg-panel-highlight overflow-hidden shrink-0 flex items-center justify-center">
+                            {coverUrl ? (
+                              <img src={coverUrl} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                              <HeartIcon className="w-4 h-4 text-spotify" />
+                            )}
+                          </div>
+                          <span className="flex-1 min-w-0">
+                            <span className={`block text-sm truncate ${i === currentIndex ? 'text-spotify-bright' : 'text-white'}`}>
+                              {t.prettyName}
+                            </span>
+                            <span className="block text-xs text-muted truncate">{content.defaultArtist}</span>
+                          </span>
+                          {i === currentIndex && playing && (
+                            <MusicIcon className="w-4 h-4 text-spotify-bright shrink-0" />
+                          )}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </section>
+
             <Declaration />
 
             <footer className="text-center text-xs text-muted/60 pb-6">
@@ -313,6 +394,32 @@ export default function App() {
         </main>
       </div>
 
+      {/* navegação inferior mobile — estilo Spotify (Início / Momentos / Biblioteca) */}
+      {!playerExpanded && (
+        <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-gradient-to-t from-black via-black/95 to-black/60">
+          <div className="flex items-stretch justify-around h-[60px]">
+            <BottomNavButton
+              icon={<HomeIcon className="w-6 h-6" />}
+              label="Início"
+              active={activeTab === 'inicio'}
+              onClick={() => goToTab('inicio')}
+            />
+            <BottomNavButton
+              icon={<PhotoIcon className="w-6 h-6" />}
+              label="Momentos"
+              active={activeTab === 'momentos'}
+              onClick={() => goToTab('momentos')}
+            />
+            <BottomNavButton
+              icon={<LibraryIcon className="w-6 h-6" />}
+              label="Biblioteca"
+              active={activeTab === 'biblioteca'}
+              onClick={() => goToTab('biblioteca')}
+            />
+          </div>
+        </nav>
+      )}
+
       <PlayerBar
         tracks={tracks}
         currentIndex={currentIndex}
@@ -324,6 +431,11 @@ export default function App() {
         duration={duration}
         volume={volume}
         coverUrl={coverUrl}
+        expanded={playerExpanded}
+        onExpandedChange={(v) => {
+          setPlayerExpanded(v);
+          if (!v) setActiveTab('inicio');
+        }}
         onToggle={togglePlay}
         onNext={next}
         onPrev={prev}
@@ -336,6 +448,31 @@ export default function App() {
         onSelectTrack={playIndex}
       />
     </div>
+  );
+}
+
+function BottomNavButton({
+  icon,
+  label,
+  active,
+  onClick,
+}: {
+  icon: ReactNode;
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      aria-label={label}
+      className={`flex flex-col items-center justify-center gap-1 flex-1 pt-2 pb-1 transition-colors ${
+        active ? 'text-white' : 'text-muted'
+      }`}
+    >
+      {icon}
+      <span className="text-[10px] font-medium">{label}</span>
+    </button>
   );
 }
 
