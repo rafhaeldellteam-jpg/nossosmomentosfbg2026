@@ -3,7 +3,7 @@ import type { Slide } from '../lib/supabase';
 import { HeartIcon } from './Icons';
 import { content } from '../config/content';
 
-const PHOTO_SLIDE_MS = 6000;
+const PHOTO_SLIDE_MS = 3000;
 
 export function EmptyCard({ text }: { text: string }) {
   return (
