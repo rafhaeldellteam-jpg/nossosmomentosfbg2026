@@ -151,7 +151,7 @@ export default function MediaCarousel({ slides }: { slides: Slide[] }) {
           </>
         )}
       </div>
-      <p className="mt-2 text-xs text-muted text-center">
+      <p className="mt-2 text-xs text-muted text-center" style={{ paddingBottom: `calc(env(safe-area-inset-bottom) + 12px)` }}>
         Toque no lado direito para avançar e no esquerdo para voltar — igual Stories
       </p>
     </div>

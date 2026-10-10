@@ -53,6 +53,10 @@ export const content = {
   // Nome do "artista" mostrado nas músicas (se quiser, mude para o nome de vocês)
   defaultArtist: 'Nossas músicas',
 
+  // Proteção do painel admin: defina uma senha para que o link #/admin só
+  // abra quando você enviar ?secret=SUA-SENHA
+  adminSecret: '',
+
   // Frase mostrada quando a lista de músicas/fotos/vídeos está vazia
   emptyHints: {
     music: 'Adicione arquivos .mp3 no bucket "music" do Supabase Storage e eles aparecem aqui automaticamente.',

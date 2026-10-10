@@ -137,7 +137,10 @@ export default function PlayerBar(props: Props) {
     <>
       {/* ===================== MOBILE — mini-player flutuante estilo Spotify ===================== */}
       {track && !expanded && (
-        <div className="md:hidden fixed inset-x-2 bottom-[68px] z-40">
+        <div
+          className="md:hidden fixed inset-x-2 z-40"
+          style={{ bottom: `calc(env(safe-area-inset-bottom) + 12px)` }}
+        >
           <div className="relative rounded-lg bg-[#282828] shadow-xl overflow-hidden">
             <div className="flex items-center gap-3 p-2">
               <button
@@ -183,7 +186,7 @@ export default function PlayerBar(props: Props) {
       )}
 
       {/* ===================== DESKTOP — barra inferior idêntica ao Spotify ===================== */}
-      <footer className="hidden md:grid fixed bottom-0 inset-x-0 z-40 bg-black grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-4 px-4 h-[72px]">
+      <footer className="hidden md:grid fixed bottom-0 inset-x-0 z-40 bg-black grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-4 px-4 h-[72px]" style={{ paddingBottom: `calc(env(safe-area-inset-bottom) + 12px)` }}>
         {/* esquerda: capa + nome + coração */}
         <div className="flex items-center gap-3 min-w-0">
           {track && (
@@ -257,7 +260,7 @@ export default function PlayerBar(props: Props) {
       {/* ===================== MOBILE — player expandido em tela cheia estilo Spotify ===================== */}
       {expanded && track && (
         <div className="md:hidden fixed inset-0 z-50 overflow-y-auto animate-slide-up">
-          <div className="min-h-full flex flex-col px-6 pt-4 pb-8 bg-gradient-to-b from-emerald-800/70 via-[#121212] to-[#121212]">
+          <div className="min-h-full flex flex-col px-6 pt-4 pb-8 bg-gradient-to-b from-emerald-800/70 via-[#121212] to-[#121212]" style={{ paddingBottom: `calc(env(safe-area-inset-bottom) + 24px)` }}>
             {/* topo */}
             <div className="flex items-center justify-between h-12">
               <button onClick={() => onExpandedChange(false)} aria-label="Fechar" className="p-2 -ml-2 text-white">

@@ -259,6 +259,8 @@ export default function App() {
         onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
         onEnded={onEnded}
         preload="metadata"
+        playsInline
+        aria-label="Player de música"
       />
 
       <div className="flex-1 flex min-h-0 p-2 gap-2">
@@ -396,7 +398,10 @@ export default function App() {
 
       {/* navegação inferior mobile — estilo Spotify (Início / Momentos / Biblioteca) */}
       {!playerExpanded && (
-        <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-gradient-to-t from-black via-black/95 to-black/60">
+        <nav
+          className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-gradient-to-t from-black via-black/95 to-black/60"
+          style={{ paddingBottom: `calc(env(safe-area-inset-bottom) + 12px)` }}
+        >
           <div className="flex items-stretch justify-around h-[60px]">
             <BottomNavButton
               icon={<HomeIcon className="w-6 h-6" />}
